@@ -73,7 +73,7 @@
             align-items: center; justify-content: center;
         }
 
-        #intro-video-overlay { background: black; display: flex; }
+        #intro-video-overlay { background: black; display: flex; flex-direction: column; }
         #nickname-overlay { background: var(--deep-bg); }
         #tutorial-overlay { background: transparent; pointer-events: none; }
 
@@ -132,11 +132,19 @@
 
     <!-- 1. Intro Video Overlay -->
     <div id="intro-video-overlay">
-        <video id="game-intro-video" class="w-full max-w-5xl aspect-video shadow-2xl cyan-glow rounded-lg overflow-hidden">
+        <!-- Start Button for Autoplay Compliance -->
+        <div id="video-start-screen" class="flex flex-col items-center gap-6">
+            <h1 class="font-futuristic text-white text-3xl tracking-widest animate-pulse">NEON_INVESTIGATOR</h1>
+            <button onclick="storyEngine.startIntro()" class="btn-modern px-12 py-6 font-futuristic text-xl uppercase tracking-tighter">Systemstart</button>
+            <p class="text-[10px] text-slate-500 font-mono uppercase">Initialisiere Neural-Link...</p>
+        </div>
+
+        <video id="game-intro-video" class="hidden w-full max-w-5xl aspect-video shadow-2xl cyan-glow rounded-lg overflow-hidden">
             <source src="intro_video.mp4" type="video/mp4">
             <div class="p-20 text-center font-futuristic text-cyan-400">VIDEO_DATA_STREAMING...</div>
         </video>
-        <div class="absolute bottom-10 flex gap-4">
+        
+        <div id="video-controls" class="hidden absolute bottom-10 flex gap-4">
             <button onclick="storyEngine.skipVideo()" class="text-[10px] font-futuristic text-slate-500 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded">Skip Intro</button>
         </div>
     </div>
@@ -323,8 +331,35 @@
             ],
 
             init() {
-                this.loadState();
+                // Check if we have a state and if we should skip intro
+                const params = new URLSearchParams(window.location.search);
+                const stateParam = params.get('state');
+                
+                if (stateParam) {
+                    try {
+                        const d = JSON.parse(atob(stateParam));
+                        // ONLY skip intro if we are actually past the very first screen
+                        if (d.idx > 0 || d.score > 0 || d.fin) {
+                            this.loadState(); 
+                            return; 
+                        }
+                    } catch(e) {}
+                }
+
+                // Show start screen for fresh game
+                document.getElementById('intro-video-overlay').style.display = 'flex';
+                document.getElementById('video-start-screen').style.display = 'flex';
+            },
+
+            startIntro() {
                 const video = document.getElementById('game-intro-video');
+                const startScreen = document.getElementById('video-start-screen');
+                const controls = document.getElementById('video-controls');
+
+                startScreen.style.display = 'none';
+                video.classList.remove('hidden');
+                controls.classList.remove('hidden');
+
                 video.onended = () => this.showNicknameInput();
                 video.play().catch(() => this.showNicknameInput());
             },
@@ -345,7 +380,6 @@
                 this.nickname = input || "Investigator_" + Math.floor(Math.random() * 9000 + 1000);
                 document.getElementById('nickname-overlay').style.display = 'none';
                 
-                // Show game interface behind the tutorial
                 document.getElementById('game-interface').classList.remove('hidden');
                 this.renderChapter();
                 this.renderDebugNav();
@@ -358,7 +392,6 @@
                 const steps = document.querySelectorAll('.tutorial-step');
                 steps[this.tutorialStep - 1].classList.remove('active');
                 
-                // Clear highlights
                 document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
 
                 this.tutorialStep++;
@@ -367,7 +400,6 @@
                     steps[this.tutorialStep - 1].classList.add('active');
                     document.getElementById('step-counter').innerText = `STEP ${this.tutorialStep} / 5`;
                     
-                    // Apply Highlights
                     if (this.tutorialStep === 2) document.getElementById('ui-visual').classList.add('tutorial-highlight');
                     if (this.tutorialStep === 3) document.getElementById('ui-hud').classList.add('tutorial-highlight');
                     if (this.tutorialStep === 4) document.getElementById('open-task-btn').classList.add('tutorial-highlight');
@@ -512,6 +544,7 @@
                         this.totalRiskScore = d.score || 0;
                         this.nickname = d.nick || "Investigator Nova";
                         if (d.fin) setTimeout(() => this.finish(), 300);
+                        
                         document.getElementById('intro-video-overlay').style.display = 'none';
                         document.getElementById('nickname-overlay').style.display = 'none';
                         document.getElementById('game-interface').classList.remove('hidden');
