@@ -56,15 +56,7 @@
             transform: scale(1.02);
         }
 
-        .tutorial-highlight {
-            position: relative;
-            z-index: 1001 !important;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 30px var(--magenta) !important;
-            border-color: var(--magenta) !important;
-            pointer-events: none;
-        }
-
-        /* Alle Overlays standardmäßig verstecken */
+        /* Overlays standardmäßig versteckt */
         #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
             display: none;
             position: fixed;
@@ -74,7 +66,6 @@
             justify-content: center;
         }
 
-        /* Video Hintergründe */
         #intro-video-overlay, #outro-video-overlay { 
             background: black; 
             flex-direction: column; 
@@ -135,7 +126,6 @@
         }
 
         .glitch-text-item { padding: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; transition: all 0.2s; }
-        .glitch-text-item:hover { background: rgba(255, 255, 255, 0.05); }
         .glitch-text-item.selected { border-color: var(--magenta); background: rgba(255, 0, 255, 0.1); color: var(--magenta); }
 
         .quiz-option {
@@ -373,7 +363,6 @@
                     } catch(e) {}
                 }
 
-                // Nur das Intro-Overlay zeigen und explizit auf flex setzen
                 document.getElementById('intro-video-overlay').style.display = 'flex';
                 document.getElementById('video-start-screen').style.display = 'flex';
                 
@@ -513,6 +502,7 @@
             },
 
             showHelp(chapter) {
+                this.addMsg("SYSTEM: Hilfe-Protokoll aktiviert. Anomalien werden hervorgehoben.");
                 if (chapter.type === "grid") {
                     document.querySelectorAll('.grid-node').forEach(node => {
                         if (chapter.targets && chapter.targets.includes(parseInt(node.dataset.idx))) {
@@ -527,6 +517,13 @@
                             setTimeout(() => item.style.borderColor = "", 3000);
                         }
                     });
+                } else if (chapter.type === "quiz") {
+                    document.querySelectorAll('.quiz-option').forEach(item => {
+                        if (chapter.targets && chapter.targets.includes(parseInt(item.dataset.idx))) {
+                            item.style.borderColor = "var(--magenta)";
+                            setTimeout(() => item.style.borderColor = "", 3000);
+                        }
+                    });
                 }
             },
 
@@ -535,13 +532,23 @@
             check() {
                 const c = this.chapters[this.currentChapterIndex];
                 let success = false;
+                
                 if (c.type === "password") {
                     const val = document.getElementById('minigame-input').value.toUpperCase().trim();
                     success = val === c.solution;
                 }
-                else if (c.type === "grid") success = Array.from(document.querySelectorAll('.grid-node.active')).length === 3;
-                else if (c.type === "scan") success = Array.from(document.querySelectorAll('.glitch-text-item.selected')).length === 3;
-                else if (c.type === "quiz") success = Array.from(document.querySelectorAll('.quiz-option.selected')).length === 3;
+                else if (c.type === "grid") {
+                    const selected = Array.from(document.querySelectorAll('.grid-node.active')).map(el => parseInt(el.dataset.idx));
+                    success = c.targets.every(t => selected.includes(t)) && selected.length === c.targets.length;
+                }
+                else if (c.type === "scan") {
+                    const selected = Array.from(document.querySelectorAll('.glitch-text-item.selected')).map(el => parseInt(el.dataset.idx));
+                    success = c.targets.every(t => selected.includes(t)) && selected.length === c.targets.length;
+                }
+                else if (c.type === "quiz") {
+                    const selected = Array.from(document.querySelectorAll('.quiz-option.selected')).map(el => parseInt(el.dataset.idx));
+                    success = c.targets.every(t => selected.includes(t)) && selected.length === c.targets.length;
+                }
 
                 if (success) {
                     document.getElementById('success-msg').classList.remove('hidden');
