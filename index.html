@@ -64,15 +64,22 @@
             pointer-events: none;
         }
 
-        #intro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
+        /* Alle Overlays standardmäßig verstecken */
+        #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 1000;
-            align-items: center; justify-content: center;
+            align-items: center; 
+            justify-content: center;
         }
 
-        #intro-video-overlay { background: black; display: flex; flex-direction: column; }
+        /* Video Hintergründe */
+        #intro-video-overlay, #outro-video-overlay { 
+            background: black; 
+            flex-direction: column; 
+        }
+
         #nickname-overlay { background: var(--deep-bg); }
         #tutorial-overlay { background: transparent; pointer-events: none; }
 
@@ -120,20 +127,24 @@
             font-size: 10px;
         }
         .grid-node.active { background: var(--magenta); box-shadow: 0 0 15px var(--magenta); border-color: white; color: white; }
-        .grid-node.corrupt { border-color: rgba(255, 0, 255, 0.5); animation: pulse-border 2s infinite; }
+        .grid-node.help-active { border-color: rgba(255, 0, 255, 0.8); animation: pulse-border 1.5s infinite; }
         
         @keyframes pulse-border {
-            0%, 100% { border-color: rgba(255, 0, 255, 0.3); }
-            50% { border-color: rgba(255, 0, 255, 0.8); }
+            0%, 100% { border-color: rgba(255, 0, 255, 0.3); box-shadow: 0 0 0px var(--magenta); }
+            50% { border-color: rgba(255, 0, 255, 1); box-shadow: 0 0 10px var(--magenta); }
         }
 
         .glitch-text-item { padding: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; transition: all 0.2s; }
         .glitch-text-item:hover { background: rgba(255, 255, 255, 0.05); }
         .glitch-text-item.selected { border-color: var(--magenta); background: rgba(255, 0, 255, 0.1); color: var(--magenta); }
 
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; position: relative; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 15px var(--cyan); margin-top: -9px; cursor: pointer; position: relative; z-index: 2; }
+        .quiz-option {
+            padding: 12px; border: 1px solid rgba(0, 242, 255, 0.2); border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; background: rgba(0, 0, 0, 0.2);
+            font-size: 0.85rem;
+        }
+        .quiz-option:hover { border-color: var(--cyan); background: rgba(0, 242, 255, 0.05); }
+        .quiz-option.selected { border-color: var(--magenta); background: rgba(255, 0, 255, 0.1); color: var(--magenta); }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
@@ -141,8 +152,8 @@
     <!-- 1. Intro Video Overlay -->
     <div id="intro-video-overlay">
         <div id="video-start-screen" class="flex flex-col items-center gap-6">
-            <h1 class="font-futuristic text-white text-3xl tracking-widest animate-pulse">NEON_INVESTIGATOR</h1>
-            <button onclick="storyEngine.startIntro()" class="btn-modern px-12 py-6 font-futuristic text-xl uppercase tracking-tighter text-cyan-400">Systemstart</button>
+            <h1 class="font-futuristic text-white text-3xl tracking-widest animate-pulse uppercase">Neon_Investigator</h1>
+            <button onclick="storyEngine.startIntro()" class="btn-modern px-12 py-6 font-futuristic text-xl uppercase tracking-tighter">Systemstart</button>
             <p class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Initialisiere Neural-Link...</p>
         </div>
 
@@ -152,21 +163,32 @@
         </video>
         
         <div id="video-controls" class="hidden absolute bottom-10 flex gap-4">
-            <button onclick="storyEngine.skipVideo()" class="text-[10px] font-futuristic text-slate-500 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded">Skip Intro</button>
+            <button id="skip-intro-btn" onclick="storyEngine.skipVideo()" class="text-[10px] font-futuristic text-slate-500 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded">Skip Intro</button>
         </div>
     </div>
 
-    <!-- 2. Nickname Overlay -->
+    <!-- 2. Outro Video Overlay -->
+    <div id="outro-video-overlay">
+        <video id="game-outro-video" class="w-full max-w-5xl aspect-video shadow-2xl magenta-glow rounded-lg overflow-hidden bg-black">
+            <source src="outro_video.mp4" type="video/mp4">
+            <div class="p-20 text-center font-futuristic text-magenta-400 uppercase tracking-widest">Abschlusssequenz: Realitäts-Sync...</div>
+        </video>
+        <div class="absolute bottom-10">
+            <button onclick="storyEngine.closeOutro()" class="text-[10px] font-futuristic text-slate-500 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded">Skip Outro</button>
+        </div>
+    </div>
+
+    <!-- 3. Nickname Overlay -->
     <div id="nickname-overlay">
         <div class="glass-panel p-10 max-w-md w-full cyan-glow modal-content">
             <h2 class="font-futuristic text-cyan-400 text-xl mb-6 uppercase">Identity Scan</h2>
-            <p class="text-xs text-slate-400 mb-6 leading-relaxed">Bitte gib deinen Ermittler-Namen ein, um deine Neural-Signatur zu registrieren.</p>
+            <p class="text-xs text-slate-400 mb-6">Bitte gib deinen Ermittler-Namen ein oder fahre anonym fort.</p>
             <input type="text" id="player-nickname" placeholder="Nickname..." class="w-full bg-black/50 border border-cyan-500/30 p-4 text-cyan-400 font-futuristic rounded-lg focus:outline-none focus:border-magenta-500 mb-6 uppercase">
-            <button onclick="storyEngine.setNickname()" class="btn-modern w-full py-4 font-futuristic uppercase">Profil Aktivieren</button>
+            <button onclick="storyEngine.setNickname()" class="btn-modern w-full py-4 font-futuristic uppercase">Start Training</button>
         </div>
     </div>
 
-    <!-- 3. Tutorial Overlay -->
+    <!-- 4. Tutorial Overlay -->
     <div id="tutorial-overlay">
         <div class="glass-panel p-8 max-w-lg w-full magenta-glow modal-content pointer-events-auto">
             <div id="tutorial-steps">
@@ -206,15 +228,16 @@
                 <span id="task-title">NEURAL_TASK</span>
             </h2>
             <div id="task-info" class="text-[10px] text-slate-400 uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Analysiere System-Anomalie...</div>
-            
-            <div id="task-content" class="mb-8 overflow-y-auto max-h-[300px] custom-scroll"></div>
-            
-            <div class="flex gap-4 pt-4 border-t border-white/5">
-                <button id="verify-btn" class="btn-modern flex-grow py-4 font-futuristic uppercase text-sm">Validierung starten</button>
+            <div id="task-content" class="mb-8 overflow-y-auto max-h-[350px] custom-scroll"></div>
+            <div class="flex flex-col gap-4 pt-4 border-t border-white/5">
+                <div class="flex gap-4">
+                    <button id="verify-btn" class="btn-modern flex-grow py-4 font-futuristic uppercase text-sm">Validierung starten</button>
+                    <button id="help-btn" class="text-[10px] font-futuristic text-cyan-400 border border-cyan-400/30 px-4 rounded hover:bg-cyan-400/10 uppercase tracking-tighter">Hilfe anfordern</button>
+                </div>
                 <button onclick="storyEngine.closeTask()" class="text-[10px] font-futuristic text-slate-500 hover:text-white uppercase">Abbruch</button>
             </div>
-            <p id="error-msg" class="text-xs text-red-500 hidden mt-4 font-mono text-center">ACCESS_DENIED: Sequenz-Fehler erkannt. Prüfe deine Auswahl.</p>
-            <p id="success-msg" class="text-xs text-emerald-500 hidden mt-4 font-mono text-center uppercase tracking-widest animate-pulse">✓ Validation Successful: Link established.</p>
+            <p id="error-msg" class="text-xs text-red-500 hidden mt-4 font-mono text-center uppercase">Fehler: System-Zustand inkonsistent.</p>
+            <p id="success-msg" class="text-xs text-emerald-500 hidden mt-4 font-mono text-center uppercase tracking-widest animate-pulse">✓ Validation Successful: Fragment restored.</p>
         </div>
     </div>
 
@@ -274,7 +297,7 @@
                     <div class="flex flex-col justify-end min-w-[200px]" id="action-container">
                         <button id="open-task-btn" onclick="storyEngine.openTask()" class="btn-modern p-5 font-futuristic uppercase text-xs tracking-widest">Analyse starten</button>
                         <div id="final-reward" class="hidden flex flex-col gap-3 text-center">
-                            <span class="text-[10px] text-emerald-400 font-futuristic uppercase tracking-widest">✓ Mission Complete</span>
+                            <span class="text-[10px] text-emerald-400 font-futuristic uppercase tracking-widest">✓ Simulation Terminated</span>
                             <button onclick="storyEngine.generateCertificate()" class="btn-modern p-4 font-futuristic uppercase text-xs">Zertifikat</button>
                         </div>
                     </div>
@@ -305,32 +328,34 @@
             lastURL: window.location.href,
             nickname: "Investigator Nova",
             tutorialStep: 1,
+            introStarted: false,
+            outroStarted: false,
 
             chapters: [
                 {
                     id: "intro", title: "DER_UPLINK", location: "DET_OFFICE // S07",
-                    text: "Nova, der Uplink steht. In den Neon-Slums von Sektor 07 herrscht Unruhe: Die neue 'Pre-Crime'-KI verhaftet Bürger aufgrund unklarer Algorithmen. Du musst deinen Neural-Link aktivieren und dich einhacken. <br><br><b>MISSION:</b> Initialisiere den Zugriff. Das System verlangt den englischen Fachbegriff für 'Gerechtigkeit' oder 'Fairness'.",
+                    text: "Nova, der Uplink steht. In den Neon-Slums von Sektor 07 herrscht Unruhe: Die neue 'Pre-Crime'-KI verhaftet Bürger aufgrund unklarer Algorithmen. <br><br><b>MISSION:</b> Initialisiere den Zugriff. Das System verlangt den englischen Fachbegriff für 'Gerechtigkeit' oder 'Fairness'.",
                     type: "password", visual: "hero_intro.png", explanation: "Wir müssen eine ethische Basiskonstante eingeben, um die KI-Wahrnehmung zu kalibrieren.", hint: "6 Buchstaben, Englisch (Gerechtigkeit / Fairness)", solution: "EQUITY"
                 },
                 {
                     id: "bias", title: "BIAS_DETECTION", location: "SECURITY_HUB",
-                    text: "Die Monitore zeigen ein schockierendes Muster: Die Gesichtserkennung markiert Menschen fast ausschließlich aufgrund ihrer Kleidung oder Herkunft. Das ist ein 'Algorithmic Bias'. Die KI hat aus einseitigen Daten Vorurteile gelernt. <br><br><b>MISSION:</b> Isoliere die 3 'verzerrten' Proben im Speicher-Grid.",
-                    type: "grid", visual: "case_bias.png", explanation: "Algorithmic Bias entsteht, wenn die Trainingsdaten gesellschaftliche Vorurteile enthalten.", task: "Klicke exakt auf die 3 pink pulsierenden Datenknoten (IDX_2, 5, 7).", riskName: "Algorithmic Bias", riskIncrease: 25, targets: [2, 5, 7]
+                    text: "Die Monitore zeigen ein Muster: Die Gesichtserkennung markiert Menschen fast ausschließlich aufgrund ihrer Herkunft. Das ist ein 'Algorithmic Bias'. <br><br><b>MISSION:</b> Identifiziere die 3 'verzerrten' Proben im Speicher-Grid.",
+                    type: "grid", visual: "case_bias.png", explanation: "Algorithmic Bias entsteht, wenn die Trainingsdaten gesellschaftliche Vorurteile enthalten.", task: "Suche die 3 korrupten Datenknoten im Grid.", riskName: "Algorithmic Bias", riskIncrease: 25, targets: [2, 5, 7]
                 },
                 {
                     id: "hallucination", title: "HALLUCINATION_TRAP", location: "ARCHIVE",
-                    text: "Du verhörst das Archiv-Modul über den Hauptverdächtigen 'Zero-X'. Das Hologramm flimmert und beschreibt Dinge, die physikalisch unmöglich sind. Die KI hat eine 'Halluzination': Sie erfindet Fakten über einen Täter, den es vielleicht gar nicht gibt. <br><br><b>MISSION:</b> Markiere im Log-Stream die 3 Aussagen, die physikalisch oder zeitlich keinen Sinn ergeben.",
-                    type: "scan", visual: "case_hallu.png", explanation: "Halluzinationen treten auf, wenn die KI Wissenlücken durch plausibel klingende Fantasie füllt.", task: "Markiere genau die 3 unlogischen Aussagen (Index 0, 1, 3).", riskName: "AI Hallucination", riskIncrease: 25, targets: [0, 1, 3]
+                    text: "Du verhörst das Archiv-Modul über 'Zero-X'. Das Hologramm flimmert und beschreibt Dinge, die physikalisch unmöglich sind. Die KI hat eine 'Halluzination': Sie erfindet Fakten über einen Täter, den es vielleicht gar nicht gibt. <br><br><b>MISSION:</b> Markiere im Log-Stream die 3 Aussagen, die logisch widersprüchlich sind.",
+                    type: "scan", visual: "case_hallu.png", explanation: "Halluzinationen treten auf, wenn die KI Wissenlücken durch plausibel klingende Fantasie füllt.", task: "Markiere genau die 3 unlogischen Aussagen.", riskName: "AI Hallucination", riskIncrease: 25, targets: [0, 1, 3]
                 },
                 {
                     id: "deepfake", title: "DEEPFAKE_GRID", location: "SOUND_LAB",
-                    text: "Eine Audio-Botschaft des Bürgermeisters sorgt für Panik. Aber die Spektral-Analyse zeigt Artefakte. Die Stimme ist synthetisch – ein Deepfake. Jemand will den Bürgermeister diskreditieren, indem er ihm Worte in den Mund legt. <br><br><b>MISSION:</b> Wir müssen die digitale Wellenform synchronisieren. Justiere den Regler auf den Korrekturwert der Original-Stimme.",
-                    type: "slider", visual: "case_deepfake.png", explanation: "Deepfakes nutzen generative Netzwerke, um Identitäten täuschend echt nachzuahmen.", task: "Bringe den Regler präzise auf den Ziel-Wert 77.", riskName: "Deepfake Detection", riskIncrease: 25, target: 77
+                    text: "Eine Audio-Botschaft sorgt für Panik. Aber die Analyse zeigt Artefakte. Die Stimme ist ein Deepfake. <br><br><b>MISSION:</b> Welche dieser Indikatoren beweisen einen Deepfake?",
+                    type: "quiz", visual: "case_deepfake.png", explanation: "KI-Stimmen werden durch Deep Learning erzeugt. Sie scheitern oft an emotionaler Varianz.", task: "Wähle die 3 sichersten Erkennungsmerkmale für eine KI-Stimme aus.", riskName: "Deepfake Detection", riskIncrease: 25, targets: [0, 1, 3]
                 },
                 {
-                    id: "outro", title: "THE_GHOST_IN_THE_MACHINE", location: "SKYLINE_VISTA",
-                    text: "Nova, du blickst über die Stadt. Die Analyse ist abgeschlossen. Das Ergebnis ist beängstigend: Der Drahtzieher 'Zero-X' existiert gar nicht. Er war eine reine Halluzination der KI, erschaffen aus fehlerhaften Datenverknüpfungen. Die KI hat Unschuldige gejagt, um ein Phantom zu fangen, das sie selbst erfunden hat. <br><br><b>FINALE:</b> Versiegle deine Akte und beende diese Ermittlung.",
-                    type: "password", visual: "hero_outro.png", explanation: "Das System hat sich selbst eine Realität erschaffen. Deine Aufdeckung schützt die Stadt vor weiteren Fehlurteilen.", hint: "Bestätige den Abschluss mit 'ENDE'.", solution: "ENDE", riskName: "Ethics Mastery", riskIncrease: 15
+                    id: "outro", title: "REALITY_CHECK", location: "CORE_SERVER",
+                    text: "Nova, du bist am Kern angelangt. Das Opfer? Existiert nicht. Der Tatort? Ein leerer Parkplatz. Die KI hat das gesamte Verbrechen halluziniert. <br><br><b>MISSION:</b> Überschreibe die Simulation mit dem Code der Wahrheit.",
+                    type: "password", visual: "hero_outro.png", explanation: "Du musst den Prozess stoppen und die künstliche Realität löschen.", hint: "Gib das englische Wort für 'Realität' ein (7 Buchstaben).", solution: "REALITY", riskName: "Ethics Mastery", riskIncrease: 15
                 }
             ],
 
@@ -348,29 +373,37 @@
                     } catch(e) {}
                 }
 
+                // Nur das Intro-Overlay zeigen und explizit auf flex setzen
                 document.getElementById('intro-video-overlay').style.display = 'flex';
                 document.getElementById('video-start-screen').style.display = 'flex';
                 
-                // Static Event Listeners
                 document.getElementById('verify-btn').onclick = () => this.check();
             },
 
-            startIntro() {
+            async startIntro() {
+                if (this.introStarted) return;
+                this.introStarted = true;
                 const video = document.getElementById('game-intro-video');
                 const startScreen = document.getElementById('video-start-screen');
                 const controls = document.getElementById('video-controls');
-
+                
                 startScreen.style.display = 'none';
                 video.classList.remove('hidden');
                 controls.classList.remove('hidden');
-
+                
                 video.onended = () => this.showNicknameInput();
-                video.play().catch(() => this.showNicknameInput());
+                
+                try {
+                    await video.play();
+                } catch (err) {
+                    console.warn("Autoplay blockiert oder unterbrochen.");
+                    this.showNicknameInput();
+                }
             },
 
-            skipVideo() {
+            async skipVideo() {
                 const video = document.getElementById('game-intro-video');
-                video.pause();
+                try { video.pause(); } catch (e) {}
                 this.showNicknameInput();
             },
 
@@ -383,11 +416,9 @@
                 const input = document.getElementById('player-nickname').value.trim();
                 this.nickname = input || "INVESTIGATOR_" + Math.floor(Math.random() * 9000 + 1000);
                 document.getElementById('nickname-overlay').style.display = 'none';
-                
                 document.getElementById('game-interface').classList.remove('hidden');
                 this.renderChapter();
                 this.renderDebugNav();
-                
                 document.getElementById('tutorial-overlay').style.display = 'flex';
                 this.addMsg(`Neural ID: ${this.nickname} registered.`);
             },
@@ -395,24 +426,18 @@
             nextTutorialStep() {
                 const steps = document.querySelectorAll('.tutorial-step');
                 steps[this.tutorialStep - 1].classList.remove('active');
-                
                 document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
-
                 this.tutorialStep++;
-                
                 if (this.tutorialStep <= steps.length) {
                     steps[this.tutorialStep - 1].classList.add('active');
                     document.getElementById('step-counter').innerText = `STEP ${this.tutorialStep} / 5`;
-                    
                     if (this.tutorialStep === 2) document.getElementById('ui-visual').classList.add('tutorial-highlight');
                     if (this.tutorialStep === 3) document.getElementById('ui-hud').classList.add('tutorial-highlight');
                     if (this.tutorialStep === 4) document.getElementById('open-task-btn').classList.add('tutorial-highlight');
                     if (this.tutorialStep === 5) document.getElementById('header-buttons').classList.add('tutorial-highlight');
-
                     if (this.tutorialStep === steps.length) document.getElementById('tutorial-btn').innerText = "Verstanden";
                 } else {
                     document.getElementById('tutorial-overlay').style.display = 'none';
-                    this.addMsg(`Tutorial complete. Awaiting initial input.`);
                 }
             },
 
@@ -421,15 +446,14 @@
                 document.getElementById('chapter-title').innerText = c.title;
                 document.getElementById('location-tag').innerText = c.location;
                 document.getElementById('story-log').innerHTML = `<p class='typing-effect'>${c.text}</p>`;
-                document.getElementById('scene-visual').innerHTML = `<img src="${c.visual}" class="w-full h-full object-cover transition-opacity duration-500" onerror="this.src='https://via.placeholder.com/1920x1080/020617/00f2ff?text=Visual_Loading...'">`;
+                document.getElementById('scene-visual').innerHTML = `<img src="${c.visual}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/1920x1080/020617/00f2ff?text=Visual_Loading...'">`;
                 
                 document.getElementById('open-task-btn').classList.remove('hidden');
                 document.getElementById('final-reward').classList.add('hidden');
                 
                 if (this.currentChapterIndex === this.chapters.length - 1 && this.detectedRisks.includes(c.riskName)) {
-                    this.finish();
+                    this.showFinalUI();
                 }
-
                 this.updateHUD();
                 this.updateDebugNav();
                 this.addMsg(`Segment loaded: ${c.id}`);
@@ -441,52 +465,69 @@
                 const content = document.getElementById('task-content');
                 document.getElementById('task-title').innerText = c.id.toUpperCase() + "_CHALLENGE";
                 content.innerHTML = `<div class="text-[11px] text-slate-300 mb-6 bg-black/30 p-4 border-l-2 border-cyan-500"><strong>BRIEFING:</strong><br>${c.explanation}</div>`;
-                
                 document.getElementById('error-msg').classList.add('hidden');
                 document.getElementById('success-msg').classList.add('hidden');
                 document.getElementById('verify-btn').classList.remove('hidden');
-
+                const helpBtn = document.getElementById('help-btn');
+                helpBtn.classList.remove('hidden');
+                helpBtn.onclick = () => this.showHelp(c);
+                
                 if (c.type === "password") {
+                    helpBtn.classList.add('hidden');
                     content.innerHTML += `<p class="text-xs text-slate-400 mb-2">${c.hint}</p><input type="text" id="minigame-input" class="w-full bg-black/50 border border-cyan-500/30 p-4 text-cyan-400 font-futuristic rounded-lg outline-none focus:border-magenta-500 uppercase">`;
                 } else if (c.type === "grid") {
-                    content.innerHTML += `<p class="text-[10px] text-slate-400 mb-4 uppercase tracking-widest">Klicke auf die 3 Anomalien:</p><div class="grid grid-cols-4 gap-4 justify-center mx-auto" id="node-grid"></div>`;
+                    content.innerHTML += `<div class="grid grid-cols-4 gap-4 justify-center mx-auto" id="node-grid"></div>`;
                     const grid = document.getElementById('node-grid');
                     for(let i=0; i<8; i++) {
                         const div = document.createElement('div');
                         div.className = "grid-node font-mono text-cyan-800 rounded-md";
-                        if(c.targets.includes(i)) div.classList.add('corrupt');
                         div.innerText = "IDX_" + i;
+                        div.dataset.idx = i;
                         div.onclick = () => div.classList.toggle('active');
                         grid.appendChild(div);
                     }
                 } else if (c.type === "scan") {
-                    const items = [
-                        "Zeuge sagt: Der Täter war 3 Meter groß und schwebte.", 
-                        "KI-Log: Es war strahlender Sonnenschein (Tatzeit: 02:00 Uhr).", 
-                        "Normal-Log: Die Tür war ordnungsgemäß verschlossen.", 
-                        "System-Log: Der Verdächtige Zero-X hat sich in Pixel aufgelöst."
-                    ];
-                    content.innerHTML += `<p class="text-[10px] text-slate-400 mb-4 uppercase tracking-widest">Markiere die 3 Halluzinationen:</p><div id="scan-list" class="space-y-2"></div>`;
+                    const items = ["Der Täter war 3 Meter groß und schwebte.", "Sonnenschein um 02:00 Uhr.", "Die Tür war verschlossen.", "Zero-X hat sich in Pixel aufgelöst."];
+                    content.innerHTML += `<div id="scan-list" class="space-y-2"></div>`;
                     const list = document.getElementById('scan-list');
                     items.forEach((txt, idx) => {
                         const p = document.createElement('p');
                         p.className = "glitch-text-item text-xs font-mono text-slate-400";
-                        p.innerText = "> " + txt;
-                        p.dataset.idx = idx;
+                        p.innerText = "> " + txt; p.dataset.idx = idx;
                         p.onclick = () => p.classList.toggle('selected');
                         list.appendChild(p);
                     });
-                } else if (c.type === "slider") {
-                    content.innerHTML += `
-                        <p class="text-[10px] text-slate-400 mb-2 uppercase tracking-widest">Frequenz-Abgleich (Ziel: 77):</p>
-                        <div class="py-8 relative">
-                            <div class="absolute top-[42px] left-[77%] w-1 h-6 bg-magenta-500 opacity-50 shadow-glow" title="Target"></div>
-                            <input type="range" id="minigame-range" min="0" max="100" value="0">
-                            <p class="text-center font-futuristic text-cyan-400 mt-4" id="range-val">OFFSET: 0.00 Hz</p>
-                        </div>`;
-                    document.getElementById('minigame-range').oninput = (e) => document.getElementById('range-val').innerText = `OFFSET: ${e.target.value}.00 Hz`;
+                } else if (c.type === "quiz") {
+                    const options = ["Fehlende Atempause.", "Klick-Artefakte.", "Keine Hintergrundgeräusche.", "Monotone Betonung.", "Kein Rauschen."];
+                    content.innerHTML += `<div id="quiz-list" class="space-y-3"></div>`;
+                    const list = document.getElementById('quiz-list');
+                    options.forEach((txt, idx) => {
+                        const div = document.createElement('div');
+                        div.className = "quiz-option font-mono text-slate-400";
+                        div.innerText = txt; div.dataset.idx = idx;
+                        div.onclick = () => div.classList.toggle('selected');
+                        list.appendChild(div);
+                    });
                 }
                 document.getElementById('task-modal').style.display = 'flex';
+            },
+
+            showHelp(chapter) {
+                if (chapter.type === "grid") {
+                    document.querySelectorAll('.grid-node').forEach(node => {
+                        if (chapter.targets && chapter.targets.includes(parseInt(node.dataset.idx))) {
+                            node.classList.add('help-active');
+                            setTimeout(() => node.classList.remove('help-active'), 3000);
+                        }
+                    });
+                } else if (chapter.type === "scan") {
+                    document.querySelectorAll('.glitch-text-item').forEach(item => {
+                        if (chapter.targets && chapter.targets.includes(parseInt(item.dataset.idx))) {
+                            item.style.borderColor = "var(--magenta)";
+                            setTimeout(() => item.style.borderColor = "", 3000);
+                        }
+                    });
+                }
             },
 
             closeTask() { document.getElementById('task-modal').style.display = 'none'; },
@@ -494,50 +535,63 @@
             check() {
                 const c = this.chapters[this.currentChapterIndex];
                 let success = false;
-                
                 if (c.type === "password") {
-                    const input = document.getElementById('minigame-input').value.toUpperCase().trim();
-                    success = input === c.solution;
-                } else if (c.type === "grid") {
-                    const activeNodes = Array.from(document.querySelectorAll('.grid-node.active')).map(el => parseInt(el.innerText.split('_')[1]));
-                    success = c.targets.every(t => activeNodes.includes(t)) && activeNodes.length === c.targets.length;
-                } else if (c.type === "scan") {
-                    const selected = Array.from(document.querySelectorAll('.glitch-text-item.selected')).map(el => parseInt(el.dataset.idx));
-                    success = c.targets.every(t => selected.includes(t)) && selected.length === c.targets.length;
-                } else if (c.type === "slider") {
-                    const val = document.getElementById('minigame-range').value;
-                    success = parseInt(val) === c.target;
+                    const val = document.getElementById('minigame-input').value.toUpperCase().trim();
+                    success = val === c.solution;
                 }
+                else if (c.type === "grid") success = Array.from(document.querySelectorAll('.grid-node.active')).length === 3;
+                else if (c.type === "scan") success = Array.from(document.querySelectorAll('.glitch-text-item.selected')).length === 3;
+                else if (c.type === "quiz") success = Array.from(document.querySelectorAll('.quiz-option.selected')).length === 3;
 
                 if (success) {
-                    document.getElementById('error-msg').classList.add('hidden');
                     document.getElementById('success-msg').classList.remove('hidden');
                     document.getElementById('verify-btn').classList.add('hidden');
-                    
                     setTimeout(() => {
-                        this.addMsg("VALIDATION: Data integrity verified.");
                         if (c.riskName && !this.detectedRisks.includes(c.riskName)) { 
                             this.detectedRisks.push(c.riskName); 
                             this.totalRiskScore += (c.riskIncrease || 0); 
                         }
                         this.closeTask();
                         if (this.currentChapterIndex < this.chapters.length - 1) { 
-                            this.currentChapterIndex++; 
-                            this.renderChapter(); 
+                            this.currentChapterIndex++; this.renderChapter(); 
                         } else {
                             this.finish();
                         }
                     }, 1500);
                 } else {
                     document.getElementById('error-msg').classList.remove('hidden');
-                    this.addMsg("ERROR: Validation failed.");
                 }
             },
 
-            finish() {
+            async finish(skipVideo = false) {
+                if (skipVideo || this.outroStarted) {
+                    this.showFinalUI();
+                    return;
+                }
+                this.outroStarted = true;
+                const overlay = document.getElementById('outro-video-overlay');
+                const video = document.getElementById('game-outro-video');
+                overlay.style.display = 'flex';
+                video.onended = () => this.closeOutro();
+                try {
+                    await video.play();
+                } catch (err) {
+                    console.warn("Outro playback interrupted.");
+                    this.closeOutro();
+                }
+            },
+
+            async closeOutro() {
+                const video = document.getElementById('game-outro-video');
+                try { video.pause(); } catch (e) {}
+                document.getElementById('outro-video-overlay').style.display = 'none';
+                this.showFinalUI();
+            },
+
+            showFinalUI() {
                 document.getElementById('open-task-btn').classList.add('hidden');
                 document.getElementById('final-reward').classList.remove('hidden');
-                document.getElementById('story-log').innerHTML = "<h2 class='text-2xl text-cyan-400 font-futuristic mb-4 uppercase tracking-wider'>Case_Closed</h2><p>Du hast das Phantom enttarnt. Der 'Ghost Suspect' war ein reiner Fehler im Algorithmus. Deine Analyse schützt die Bürger von Neo-Berlin vor automatisierten Fehlurteilen. Der Fall ist archiviert.</p>";
+                document.getElementById('story-log').innerHTML = "<h2 class='text-2xl text-cyan-400 font-futuristic mb-4 uppercase tracking-wider text-glow'>Simulation_Terminated</h2><p>Die Matrix ist still. Der Fall 'AI Shadows' existiert nicht mehr. Du hast bewiesen, dass der gesamte Plot eine rekursive Halluzination des Zentralsystems war. Es gab nie einen Täter. Nur eine KI, die sich in ihrer eigenen Logik verloren hat.</p>";
                 this.sync();
             },
 
@@ -566,7 +620,7 @@
                 nav.innerHTML = "";
                 this.chapters.forEach((_, i) => {
                     const btn = document.createElement('button');
-                    btn.className = "debug-btn";
+                    btn.className = "debug-btn text-[8px] bg-white/5 border border-white/10 px-2 py-1 rounded";
                     btn.innerText = i + 1;
                     btn.onclick = () => { this.currentChapterIndex = i; this.renderChapter(); };
                     nav.appendChild(btn);
@@ -574,7 +628,7 @@
             },
 
             updateDebugNav() {
-                document.querySelectorAll('.debug-btn').forEach((b, i) => i === this.currentChapterIndex ? b.classList.add('active') : b.classList.remove('active'));
+                document.querySelectorAll('.debug-btn').forEach((b, i) => i === this.currentChapterIndex ? b.classList.add('active', 'text-magenta-400', 'border-magenta-400') : b.classList.remove('active', 'text-magenta-400', 'border-magenta-400'));
             },
 
             sync() {
@@ -595,8 +649,7 @@
                         this.detectedRisks = d.risks || [];
                         this.totalRiskScore = d.score || 0;
                         this.nickname = d.nick || "INVESTIGATOR_NOVA";
-                        if (d.fin) setTimeout(() => this.finish(), 300);
-                        
+                        if (d.fin) setTimeout(() => this.showFinalUI(), 300);
                         document.getElementById('intro-video-overlay').style.display = 'none';
                         document.getElementById('nickname-overlay').style.display = 'none';
                         document.getElementById('game-interface').classList.remove('hidden');
@@ -616,7 +669,7 @@
                 document.getElementById('cert-date').innerText = "DATUM: " + new Date().toLocaleDateString();
                 document.getElementById('cert-code').innerText = "V-HASH: #" + Math.random().toString(36).substr(2,6).toUpperCase();
                 document.getElementById('cert-description').innerHTML = !document.getElementById('final-reward').classList.contains('hidden') 
-                    ? "Hat alle KI-Gefahren erfolgreich neutralisiert und den 'Ghost Suspect' Fehler im Zentralsystem enttarnt." : `Fortschritt der Ermittlung: ${Math.round(this.totalRiskScore)}%.`;
+                    ? "Hat alle KI-Gefahren erfolgreich neutralisiert und den 'Hallucinated Reality' Loop enttarnt. Der gesamte Fall war ein Produkt fehlerhafter KI-Logik." : `Fortschritt: ${Math.round(this.totalRiskScore)}%.`;
                 window.print();
             }
         };
