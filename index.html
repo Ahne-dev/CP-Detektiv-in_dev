@@ -88,16 +88,27 @@
             box-shadow: 0 0 15px var(--magenta);
         }
 
+        /* Zertifikat Styling */
         #certificate {
-            width: 210mm; height: 297mm; background: #fff; color: #000; padding: 20mm;
+            width: 210mm; height: 297mm; background: #fff; color: #000; padding: 25mm;
             display: none; flex-direction: column; justify-content: space-between;
-            border: 10px double #111;
+            border: 15px double #111;
+            position: relative;
         }
 
         @media print {
+            @page { size: A4; margin: 0; }
             body * { visibility: hidden; }
             #certificate, #certificate * { visibility: visible; }
-            #certificate { display: flex !important; position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; border: none; }
+            #certificate { 
+                display: flex !important; 
+                position: fixed; 
+                left: 0; top: 0; 
+                width: 210mm; height: 297mm; 
+                margin: 0; border: none; 
+                z-index: 9999;
+                background: white;
+            }
         }
 
         .typing-effect::after { content: '|'; animation: blink 1s infinite; }
@@ -142,7 +153,6 @@
             font-size: 8px; padding: 2px 4px; border-radius: 2px; font-weight: bold;
         }
 
-        /* Hilfsbox für Passwörter */
         .decryption-hint-box {
             background: rgba(0, 242, 255, 0.15);
             border: 2px solid var(--cyan);
@@ -260,6 +270,39 @@
         </div>
     </div>
 
+    <!-- Zertifikat Dokument -->
+    <div id="certificate">
+        <div class="flex flex-col h-full text-center items-center justify-between">
+            <div class="w-full border-b-4 border-black pb-8">
+                <h1 class="text-5xl font-futuristic uppercase tracking-tighter mb-2">Ethics Mastery</h1>
+                <p class="text-sm font-mono tracking-widest">ZERTIFIZIERTER KI-ERMITTLER // SEKTOR 07</p>
+            </div>
+            
+            <div class="my-12">
+                <p class="text-xl italic mb-4">Hiermit wird bescheinigt, dass</p>
+                <h2 id="cert-name" class="text-6xl font-futuristic uppercase border-b-2 border-black px-12 py-4 mb-8">NAME</h2>
+                <div id="cert-description" class="max-w-2xl text-lg leading-relaxed text-slate-700"></div>
+            </div>
+
+            <div class="w-full flex justify-between items-end border-t-2 border-black pt-8">
+                <div class="text-left">
+                    <p class="font-mono text-xs uppercase opacity-50">Ausstellungsdatum</p>
+                    <p id="cert-date" class="font-mono text-lg font-bold">--.--.----</p>
+                </div>
+                <div class="text-center px-8">
+                    <div class="w-24 h-24 border-4 border-black rounded-full flex items-center justify-center mb-2">
+                        <span class="font-futuristic text-3xl">NEON</span>
+                    </div>
+                    <p class="font-mono text-[10px] uppercase">Validierungs-Siegel</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-mono text-xs uppercase opacity-50">Zertifikats-ID</p>
+                    <p id="cert-code" class="font-mono text-lg font-bold">#XXXXXX</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Interface (Hidden by default) -->
     <div id="game-interface" class="w-full max-w-7xl flex flex-col gap-6 relative z-10 hidden">
         <header class="flex justify-between items-end px-2" id="ui-header">
@@ -310,6 +353,15 @@
                     <div id="debug-nav" class="flex flex-wrap justify-center gap-2 pt-4 border-t border-white/5"></div>
                 </div>
             </aside>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div id="save-modal">
+        <div class="glass-panel p-10 max-w-sm w-full cyan-glow text-center modal-content">
+            <h2 class="font-futuristic text-cyan-400 mb-6 uppercase">Save State</h2>
+            <div id="qrcode" class="bg-white p-4 inline-block rounded-xl mb-6"></div>
+            <button onclick="document.getElementById('save-modal').style.display='none'" class="btn-modern w-full py-3">Close</button>
         </div>
     </div>
 
@@ -375,9 +427,8 @@
                 video.classList.remove('hidden');
                 document.getElementById('video-controls').classList.remove('hidden');
                 
-                // Listener für das reguläre Ende setzen
                 video.onended = () => {
-                    video.onended = null; // Listener löschen
+                    video.onended = null;
                     this.showNicknameInput();
                 };
 
@@ -391,7 +442,7 @@
             skipVideo() {
                 const video = document.getElementById('game-intro-video');
                 video.pause();
-                video.onended = null; // Verhindert, dass der Listener die Funktion nochmal aufruft
+                video.onended = null;
                 this.showNicknameInput();
             },
 
@@ -427,7 +478,7 @@
                 document.getElementById('chapter-title').innerText = c.title;
                 document.getElementById('location-tag').innerText = c.location;
                 document.getElementById('story-log').innerHTML = `<p class='typing-effect'>${c.text}</p>`;
-                document.getElementById('scene-visual').innerHTML = `<img src="${c.visual}" class="w-full h-full object-cover">`;
+                document.getElementById('scene-visual').innerHTML = `<img src="${c.visual}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/1920x1080/020617/00f2ff?text=Visual_Loading...'">`;
                 
                 document.getElementById('open-task-btn').classList.remove('hidden');
                 document.getElementById('final-reward').classList.add('hidden');
@@ -494,7 +545,6 @@
             showHelp(chapter) {
                 this.addMsg("SYSTEM: Neural-Scan wird durchgeführt...");
                 const content = document.getElementById('task-content');
-                
                 const old = document.getElementById('help-hint-popup');
                 if (old) old.remove();
 
@@ -663,7 +713,35 @@
                 if (d.fin) this.showFinalUI();
             },
 
-            generateCertificate() { window.print(); }
+            openSaveModal() {
+                const m = document.getElementById('save-modal');
+                m.style.display = 'flex';
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById('qrcode'), { 
+                    text: window.location.href, 
+                    width: 150, height: 150, 
+                    colorDark : "#020617", colorLight : "#ffffff" 
+                });
+            },
+
+            generateCertificate() {
+                // Daten für das Zertifikat befüllen
+                document.getElementById('cert-name').innerText = this.nickname.toUpperCase();
+                document.getElementById('cert-date').innerText = new Date().toLocaleDateString('de-DE');
+                document.getElementById('cert-code').innerText = "#" + Math.random().toString(36).substr(2, 6).toUpperCase();
+                
+                const isFinished = !document.getElementById('final-reward').classList.contains('hidden');
+                const desc = document.getElementById('cert-description');
+                
+                if (isFinished) {
+                    desc.innerHTML = `Der Ermittler hat alle KI-Anomalien erfolgreich identifiziert und neutralisiert. Durch logische Deduktion wurde der 'Hallucinated Reality'-Loop enttarnt und die systemische Integrität wiederhergestellt. <strong>Expertise-Level: Master of AI Ethics.</strong>`;
+                } else {
+                    desc.innerHTML = `Der Ermittler befindet sich in der Ausbildung. Aktueller Fortschritt der Risiko-Analyse: <strong>${Math.round(this.totalRiskScore)}%</strong>. Die Untersuchung der systemischen Korruption in Sektor 07 dauert an.`;
+                }
+
+                // Druckvorgang starten
+                window.print();
+            }
         };
 
         window.onload = () => storyEngine.init();
