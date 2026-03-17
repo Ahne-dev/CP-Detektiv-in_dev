@@ -116,7 +116,7 @@
                 -webkit-print-color-adjust: exact;
             }
             /* Alles außer das Zertifikat komplett aus dem DOM-Layout entfernen */
-            #game-interface, #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
+            #game-interface, #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal, #contact-footer {
                 display: none !important;
             }
             #certificate {
@@ -190,9 +190,24 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        #contact-footer {
+            position: fixed;
+            bottom: 1rem;
+            right: 1.5rem;
+            z-index: 50;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <!-- Contact Info (Corner) -->
+    <div id="contact-footer" class="hidden md:block">
+        <p class="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">
+            Ansprechpartner: <span class="text-cyan-500/60 font-bold">ualdinger@lmz-bw.de</span>
+        </p>
+    </div>
 
     <!-- 1. Intro Video Overlay -->
     <div id="intro-video-overlay">
