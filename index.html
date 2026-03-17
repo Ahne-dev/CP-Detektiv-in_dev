@@ -56,6 +56,7 @@
             transform: scale(1.02);
         }
 
+        /* Overlays */
         #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
             display: none;
             position: fixed;
@@ -88,26 +89,45 @@
             box-shadow: 0 0 15px var(--magenta);
         }
 
-        /* Zertifikat Styling */
+        /* Zertifikat Styling - Optimiert für eine Seite und GitHub Pages */
         #certificate {
-            width: 210mm; height: 297mm; background: #fff; color: #000; padding: 25mm;
-            display: none; flex-direction: column; justify-content: space-between;
-            border: 15px double #111;
-            position: relative;
+            width: 210mm;
+            height: 297mm;
+            background: #fff;
+            color: #000;
+            padding: 20mm;
+            display: none; /* Nur beim Drucken anzeigen */
+            flex-direction: column;
+            justify-content: space-between;
+            border: 10px double #000;
+            box-sizing: border-box;
+            z-index: 10000;
         }
 
         @media print {
-            @page { size: A4; margin: 0; }
-            body * { visibility: hidden; }
-            #certificate, #certificate * { visibility: visible; }
-            #certificate { 
-                display: flex !important; 
-                position: fixed; 
-                left: 0; top: 0; 
-                width: 210mm; height: 297mm; 
-                margin: 0; border: none; 
-                z-index: 9999;
-                background: white;
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            body {
+                background: #fff !important;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+            }
+            /* Alles außer das Zertifikat komplett aus dem DOM-Layout entfernen */
+            #game-interface, #intro-video-overlay, #outro-video-overlay, #nickname-overlay, #tutorial-overlay, #task-modal, #save-modal {
+                display: none !important;
+            }
+            #certificate {
+                display: flex !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                border: 15px double #000;
             }
         }
 
@@ -270,34 +290,36 @@
         </div>
     </div>
 
-    <!-- Zertifikat Dokument -->
+    <!-- Zertifikat Dokument - Optimierte Struktur für GitHub & Druck -->
     <div id="certificate">
         <div class="flex flex-col h-full text-center items-center justify-between">
             <div class="w-full border-b-4 border-black pb-8">
                 <h1 class="text-5xl font-futuristic uppercase tracking-tighter mb-2">Ethics Mastery</h1>
-                <p class="text-sm font-mono tracking-widest">ZERTIFIZIERTER KI-ERMITTLER // SEKTOR 07</p>
+                <p class="text-xs font-mono tracking-widest uppercase opacity-75">Zertifizierter KI-Ermittler // Sektor 07</p>
             </div>
             
-            <div class="my-12">
-                <p class="text-xl italic mb-4">Hiermit wird bescheinigt, dass</p>
-                <h2 id="cert-name" class="text-6xl font-futuristic uppercase border-b-2 border-black px-12 py-4 mb-8">NAME</h2>
-                <div id="cert-description" class="max-w-2xl text-lg leading-relaxed text-slate-700"></div>
+            <div class="flex-grow flex flex-col justify-center items-center py-6 w-full">
+                <p class="text-xl italic mb-6">Hiermit wird bescheinigt, dass</p>
+                <div class="w-full border-b-2 border-black mb-8 px-4">
+                    <h2 id="cert-name" class="text-3xl font-futuristic uppercase py-4 text-center truncate">NAME</h2>
+                </div>
+                <div id="cert-description" class="max-w-xl text-base leading-relaxed text-slate-700 text-center px-4"></div>
             </div>
 
             <div class="w-full flex justify-between items-end border-t-2 border-black pt-8">
-                <div class="text-left">
-                    <p class="font-mono text-xs uppercase opacity-50">Ausstellungsdatum</p>
-                    <p id="cert-date" class="font-mono text-lg font-bold">--.--.----</p>
+                <div class="text-left w-1/3">
+                    <p class="font-mono text-[10px] uppercase opacity-50">Datum der Ausstellung</p>
+                    <p id="cert-date" class="font-mono text-base font-bold">--.--.----</p>
                 </div>
-                <div class="text-center px-8">
-                    <div class="w-24 h-24 border-4 border-black rounded-full flex items-center justify-center mb-2">
-                        <span class="font-futuristic text-3xl">NEON</span>
+                <div class="text-center w-1/3 flex flex-col items-center">
+                    <div class="w-20 h-20 border-4 border-black rounded-full flex items-center justify-center mb-2">
+                        <span class="font-futuristic text-2xl">NEON</span>
                     </div>
-                    <p class="font-mono text-[10px] uppercase">Validierungs-Siegel</p>
+                    <p class="font-mono text-[8px] uppercase tracking-widest">Neuraler V-Hash</p>
                 </div>
-                <div class="text-right">
-                    <p class="font-mono text-xs uppercase opacity-50">Zertifikats-ID</p>
-                    <p id="cert-code" class="font-mono text-lg font-bold">#XXXXXX</p>
+                <div class="text-right w-1/3">
+                    <p class="font-mono text-[10px] uppercase opacity-50">Authentifizierung</p>
+                    <p id="cert-code" class="font-mono text-base font-bold">#XXXXXX</p>
                 </div>
             </div>
         </div>
