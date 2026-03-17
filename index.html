@@ -142,7 +142,7 @@
             font-size: 8px; padding: 2px 4px; border-radius: 2px; font-weight: bold;
         }
 
-        /* Neue, deutliche Hilfsbox für Passwörter */
+        /* Hilfsbox für Passwörter */
         .decryption-hint-box {
             background: rgba(0, 242, 255, 0.15);
             border: 2px solid var(--cyan);
@@ -313,15 +313,6 @@
         </div>
     </div>
 
-    <!-- Save Modal -->
-    <div id="save-modal">
-        <div class="glass-panel p-10 max-w-sm w-full cyan-glow text-center modal-content">
-            <h2 class="font-futuristic text-cyan-400 mb-6 uppercase">Save State</h2>
-            <div id="qrcode" class="bg-white p-4 inline-block rounded-xl mb-6"></div>
-            <button onclick="document.getElementById('save-modal').style.display='none'" class="btn-modern w-full py-3">Close</button>
-        </div>
-    </div>
-
     <script>
         const storyEngine = {
             currentChapterIndex: 0,
@@ -383,11 +374,26 @@
                 startScreen.style.display = 'none';
                 video.classList.remove('hidden');
                 document.getElementById('video-controls').classList.remove('hidden');
-                video.onended = () => this.showNicknameInput();
-                try { await video.play(); } catch (err) { this.showNicknameInput(); }
+                
+                // Listener für das reguläre Ende setzen
+                video.onended = () => {
+                    video.onended = null; // Listener löschen
+                    this.showNicknameInput();
+                };
+
+                try { 
+                    await video.play(); 
+                } catch (err) { 
+                    this.showNicknameInput(); 
+                }
             },
 
-            skipVideo() { this.showNicknameInput(); },
+            skipVideo() {
+                const video = document.getElementById('game-intro-video');
+                video.pause();
+                video.onended = null; // Verhindert, dass der Listener die Funktion nochmal aufruft
+                this.showNicknameInput();
+            },
 
             showNicknameInput() {
                 document.getElementById('intro-video-overlay').style.display = 'none';
@@ -489,23 +495,20 @@
                 this.addMsg("SYSTEM: Neural-Scan wird durchgeführt...");
                 const content = document.getElementById('task-content');
                 
-                // Entferne alte Popups
                 const old = document.getElementById('help-hint-popup');
                 if (old) old.remove();
 
                 if (chapter.type === "password") {
-                    // Neues prominentes Popup-Feld für Aufgabe 1 & 5
                     const hintDiv = document.createElement('div');
                     hintDiv.id = 'help-hint-popup';
                     hintDiv.className = "decryption-hint-box";
                     hintDiv.innerHTML = `
                         <div class="text-[9px] uppercase mb-2 opacity-50 tracking-[0.2em] border-b border-cyan-500/30 pb-1">Neural_Hint_Detected</div>
-                        Das System hat Fragmente entschlüsselt:<br>
-                        Das Wort beginnt mit <strong class="text-white text-lg">'${chapter.solution[0]}'</strong><br>
-                        und endet mit <strong class="text-white text-lg">'${chapter.solution[chapter.solution.length-1]}'</strong>.<br>
+                        Fragmente entschlüsselt:<br>
+                        Startet mit <strong class="text-white text-lg">'${chapter.solution[0]}'</strong><br>
+                        Endet mit <strong class="text-white text-lg">'${chapter.solution[chapter.solution.length-1]}'</strong>.<br>
                         Länge: <strong class="text-white">${chapter.solution.length} Zeichen</strong>
                     `;
-                    // Oben im Content einfügen, damit es sofort sichtbar ist
                     content.prepend(hintDiv);
                 } else {
                     const label = '<span class="help-label animate-pulse">ANOMALY</span>';
@@ -579,11 +582,23 @@
                 this.outroStarted = true;
                 const video = document.getElementById('game-outro-video');
                 document.getElementById('outro-video-overlay').style.display = 'flex';
-                video.onended = () => this.closeOutro();
-                try { await video.play(); } catch (err) { this.closeOutro(); }
+                
+                video.onended = () => {
+                    video.onended = null;
+                    this.closeOutro();
+                };
+
+                try { 
+                    await video.play(); 
+                } catch (err) { 
+                    this.closeOutro(); 
+                }
             },
 
             closeOutro() {
+                const video = document.getElementById('game-outro-video');
+                video.pause();
+                video.onended = null;
                 document.getElementById('outro-video-overlay').style.display = 'none';
                 this.showFinalUI();
             },
